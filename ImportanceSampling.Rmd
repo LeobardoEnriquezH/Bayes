@@ -1,0 +1,37 @@
+---
+title: "ImportanceSampling"
+output: pdf_document
+date: "2023-10-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Importance Sampling
+
+```{r}
+M <- sqrt(2*pi)
+N=500
+cuenta=1
+intentos=1
+muestra_imp<-seq(0,0,N)
+while(cuenta < (N+1)){
+  intentos <- intentos + 1
+  theta<-rnorm(1,1,1)
+  aux<-runif(1)
+  if (aux <= ((1/(1+theta^2))*exp(-0.5*(1-theta)^2)/M*dnorm(theta,1,1)))
+  {muestra_imp[cuenta]<-theta
+    cuenta=cuenta+1
+  }
+}
+
+```
+
+
+
+
+```{r}
+plot(density(muestra_imp,bw=0.5))
+```
+

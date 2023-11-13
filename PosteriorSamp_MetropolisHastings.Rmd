@@ -1,0 +1,95 @@
+---
+title: "PosteriorSamp_MetropolisHastings"
+output: pdf_document
+date: "2023-10-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Log posterior parameter Sampling with Metropolis Hastings
+
+```{r}
+x<-c(23,261,87,7,120,14,62,47,225,71,246,21,42,20,5,12,120,11,3,14,71,11,14,11,16,90,1,16,52,95)
+
+```
+
+
+
+
+```{r}
+fvm<-function(v){
+  k<-length(v)
+  c<-seq(0,0,length=k)
+  for(i in 1:n){c<-c+x[i]^exp(v)}
+(exp(n-2)*v)*exp(v) * sum(log(x)-n*log(c))
+  }
+
+```
+
+
+
+```{r}
+N=1000
+R=1100
+```
+
+
+```{r}
+MH<-function(pv,N,R,m,varf){
+  # pv: es la función de la que queremos muestear
+  # N: Tamaño de la muestra
+  # R: número de iteraciones
+  # m: Media de la distribución Normal (fácil de muestear)
+  # varf: varianza de la distribución Normal (fácil de muestear)  
+  salida<-list(mv=0,me=0)
+  v0<-rnorm(N,m,sqrt(varf))
+  ve<-seq(0,0,length(R))
+  thme<-seq(0,0,length(R))
+  
+  #iteraciones
+  for(i in 1:R){
+   v1<-rnorm(N,m,sqrt(varf))
+   w1<-fvm(v1)/dnorm(v1,m,sqrt(varf)) 
+   w0<-fvm(v0)/dnorm(v0,m,sqrt(varf))
+   alfa<-w1/w0
+   u<-runif(N,0,1)
+   aux<-ifelse(u<alfa,v1,v0)
+   v0<-aux
+   ve[i]<-mean(v0)
+   thme[i]<-mean(exp(v0))
+   print(i)
+  }
+  salida$mv<-ve
+  salida$me<-thme
+  salida
+}
+```
+
+
+
+```{r}
+salida1<-MH(fvm,N,R,-0.17,0.020)
+
+```
+
+
+
+```{r}
+hist(salida1$me)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

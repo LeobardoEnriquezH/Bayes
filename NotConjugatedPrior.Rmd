@@ -1,0 +1,58 @@
+---
+title: "NotConjugatedPrior_example"
+output: pdf_document
+date: "2023-10-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Not Conjugated Prior
+
+
+```{r}
+#Example of not conjugated prior
+n=20
+y=17
+
+#Theta values (Domain)
+theta=seq(0,1,by=0.005)
+
+#Posterior
+ftheta=theta^y*(1-theta)^(n-y)*exp(theta)
+plot(theta, ftheta, type="l", col="blue")
+
+
+```
+
+
+
+
+```{r}
+#Get integ value to norm¿?
+fth=function(th){th^y*(1-th)^(n-y)*exp(th)}
+(i=integrate(fth,0,1))
+```
+
+
+
+
+
+```{r}
+#Plot posterior norm¿?lized
+plot(theta, ftheta/9.497026e-05,type="l", col="red")
+
+#Add prior distribution
+lines(theta, exp(theta)/(exp(1)-1), type="l", col="green")
+```
+
+
+
+
+
+
+
+
+
+

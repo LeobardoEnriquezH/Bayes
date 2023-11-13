@@ -1,0 +1,101 @@
+---
+title: "KalmanFilter_DLM"
+output: pdf_document
+date: "2023-10-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dlm)
+```
+
+## Kalman filter for dynamic linear models.
+
+
+
+```{r}
+ballenas<-read.csv("ballenas.csv")
+ballenas<-ballenas$x
+plot(ballenas,type="o")     
+```
+
+
+
+```{r}
+mod1<-dlmModPoly(2,dV=20, m0=c(2300,0) )
+mod2<-dlmModPoly(3,dV=20, m0=c(2300,0,0) )
+
+mod1Filt<-dlmFilter(ballenas,mod1)
+mod2Filt<-dlmFilter(ballenas,mod2)
+
+
+mod1Fore<-dlmForecast(mod1Filt,nAhead=5)
+mod2Fore<-dlmForecast(mod2Filt,nAhead=5)
+
+
+plot(ballenas,type="o",pch=19,lty=4,lwd=1,col="dodgerblue",xaxt="n",xlab="Año",ylab="Ballenas",ylim=c(1400,3400))
+lines(mod1Filt$f,type="o",pch=16,lty=4,lwd=1,col="orchid1")
+lines(mod2Filt$f,type="o",pch=16,lty=4,lwd=1,col="darkgreen")
+
+
+```
+
+
+
+
+```{r}
+mod1Fore$a[,1]
+mod2Fore$a[,1]
+
+```
+
+
+
+```{r}
+fore1<-append(mod1Filt$f,mod1Fore$a[,1])
+fore2<-append(mod2Filt$f,mod2Fore$a[,1])
+
+plot(ballenas,type="o",pch=19,lty=4,lwd=1,col="dodgerblue",xaxt="n",xlab="Año",ylab="Ballenas",ylim=c(1400,3400), xlim=c(0,43))
+lines(fore1,type="o",pch=16,lty=4,lwd=1,col="orchid1")
+lines(fore2,type="o",pch=16,lty=4,lwd=1,col="darkgreen")
+```
+
+
+
+
+
+
+```{r}
+msef<-function(u,v){
+r<-mean((u-v)^{2})
+  return(r)
+}
+
+print(msef(mod1Filt$f,ballenas))
+print(msef(mod2Filt$f,ballenas))
+```
+
+
+
+
+
+
+## References
+
+Giovanni Petris, Sonia Petrone & Patrizia Campagnoli. "Dynamic Linear Models with R". 2009. 
+
+Giovanni Petris. "An R Package for Dynamic Linear Models". Journal of Statistical Software. 2010.
+
+
+
+
+
+
+
+
+
+
+

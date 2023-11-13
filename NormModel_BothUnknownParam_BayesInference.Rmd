@@ -1,0 +1,139 @@
+---
+title: "NormModel_BothUnknownParam_BayesInference"
+output: pdf_document
+date: "2023-10-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(LearnBayes)
+library(rstan)
+```
+
+## Normal Model with Both Unknown Parameters in Bayes Inference
+
+New York Marathon example. 
+
+```{r}
+### Interesa la distribución del tiempo que toma complerar 
+### el maratón de NY a hombres entre 20-29 años
+
+data("marathontimes")
+attach(marathontimes)
+```
+
+
+
+```{r}
+plot(density(time,bw=20))
+```
+
+
+```{r}
+mycontour(normchi2post,c(220,330,500,9000),time)
+title(xlab="media",ylab="varianza")
+S=sum((time-mean(time))^2)
+n=length(time)
+sigma2=S/rchisq(1000,n-1)
+mu=rnorm(1000,mean=mean(time),sd=sqrt(sigma2)/sqrt(n))
+points(mu,sigma2)
+
+
+```
+
+
+
+
+```{r}
+quantile(mu,c(0.025,0.975))
+quantile(sqrt(sigma2),c(0.025,0.975))
+```
+
+
+```{r}
+datav<-read.csv("datos_aviones.csv",header=TRUE)
+plot(datav$miles_flown,datav$fat_acc)
+```
+
+```{r}
+plot(datav$year,datav$fat_acc)
+```
+
+
+```{r}
+y.hat<-mean(datav$fat_acc)
+x.hat<-mean(datav$miles_flown)
+lambda<-matrix(0,10,20) 
+y_rep<-matrix(0,10,20)
+for(i in 1:10){
+ lambda[i,]<-rgamma(20,0.5+10*y.hat,10*x.hat)
+ y_rep[i,]<-rpois(20,mean(lambda[i,])*datav$miles_flown)
+}
+```
+
+
+
+
+
+```{r}
+
+model = " data {
+int<lower=0> n; int<lower=0> y[n]; vector<lower=0>[n] x;
+}
+transformed data {
+vector[n] log_x;
+log_x <- log(x); 
+}
+parameters {
+real beta[2];
+}
+transformed parameters {
+vector[n] log_lambda;
+for (i in 1:n) log_lambda[i] <- beta[1] + beta[2]*i;
+}
+model {
+y ~ poisson_log(log_x + log_lambda); 
+}
+"
+
+
+```
+
+
+```{r}
+m = stan_model(model_code = model)
+r = sampling(m, list(n=nrow(datav), y=datav$fat_acc, x=datav$miles_flown))
+lambda = extract(r)$log_lambda
+y_1<-rpois(20,exp(-5.0226316)*datav$miles_flown[1])
+```
+
+
+
+
+```{r}
+summary(r)
+```
+
+
+
+```{r}
+barplot(y_1)
+```
+
+
+
+
+## References
+
+Jim Albert. Bayesian Computation with R. Second Edition. 2009.
+
+
+
+
+
+

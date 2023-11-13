@@ -1,0 +1,81 @@
+---
+title: "ParameterExpectation_WeibullModel_MonteCarlo"
+output: pdf_document
+date: "2023-10-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Parameter Expectation with Weibull Model Monte Carlo
+
+
+```{r}
+#Example: Estimate E(theta) from a P(x|theta, lambda) Weibull model (Likelihood function)
+#A prior function p(theta, lambda) proportional to (theta^-2)(lambda^-1)
+#A posterior P(theta, lamda|x) proportional to (prior)*(likelihood) and marginalized w.r.t.lambda
+#Then the posterior marginalized P(theta|x) is proportional to pv function  
+
+x<-c(23,261,87,7,120,14,62,47,225,71,246,21,42,20,5,12,120,11,3,14,71,11,14,11,16,90,1,16,52,95)
+
+```
+
+
+```{r}
+hist(x, nclass=15)
+```
+
+
+
+```{r}
+#Posterior distribution P(theta|x) proportional to:
+pv<-function(v,x){
+  v^(length(x)-2)*prod(x)^{v-1}/(sum(x^v))^length(x)
+}
+
+
+```
+
+
+```{r}
+m=1
+s=0.5
+N=5000
+muestra<-seq(0,0,N)
+mtheta<-seq(0,0,N)
+```
+
+
+```{r}
+for(i in 1:N){
+  aleatorio<-rnorm(1,m,s)
+  mtheta[i]<-aleatorio
+  muestra[i]<-pv(aleatorio,x)/dnorm(aleatorio,m,s)
+}
+```
+
+
+```{r}
+#Weights: w(theta_i)
+pesos<-muestra/sum(muestra)
+```
+
+
+```{r}
+#Expectation: E(theta) estimated:
+esperanza<-sum(mtheta*pesos)
+esperanza
+```
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,212 @@
+---
+title: "MultiParamLogisticBayesianRegModel"
+author: "Leobardo Enriquez"
+date: "2023-10-02"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(LearnBayes)
+library(graphics)
+```
+
+## Multi Parameter Logistic Bayesian Regression Model
+
+
+Bioessays example.
+
+
+In the development of drugs, bioassay experiments are often performed on animals. In a typical experiment, various dose levels of a compound are administered to batches of animals and a binary outcome (positive or negative) is recorded for each animal. We consider data from Gelman et al. (2003), where one observes a dose level (in log g/ml), the number of animals, and the number of deaths for each of four groups.
+
+
+Let yi denote the number of deaths observed out of ni with dose level xi. We assume yi is binomial(ni, pi), where the probability pi follows the logistic model:
+
+$log(p_i/(1-p_i))=\beta_0+\beta_1x_1$
+
+The likelihood function of the unknown regression parameters $\beta_0$ and $\beta_1$ is
+given by: 
+
+$L(\beta_0,\beta_1) \alpha \Pi_{i=1}^4 p_i^{y_i}(1-p_i)^{n_i-y_i}$
+
+where $pi=exp(\beta_0+\beta_1x_i)/(1+exp(\beta_0+\beta_1x_i))$.
+
+
+We begin in R by defining the covariate vector x and the vectors of sample
+sizes and observed success counts n and y.
+
+
+```{r}
+x=c(-0.86, -0.3, -0.05, 0.73)
+n=c(5,5,5,5)
+y=c(0,1,3,5)
+data=cbind(x,n,y)
+```
+
+
+A standard classical analysis fits the model by maximum likelihood. The R function glm is used to do this fitting, and the summary output presents the estimates and the associated standard errors.
+
+```{r}
+response = cbind(y, n - y)
+results = glm(response ~ x, family = binomial)
+summary(results)
+```
+
+
+
+Suppose that the user has prior beliefs about the regression parameters that she inputs through the following conditional means prior. This prior is constructed by thinking about the probability of death at two different dose levels, xL and xH. when the dose level is xL=-0.7, the median and 90th percentile of the probability of death pL are respectively 0.2 and 0.5.  One matches this information with a beta prior using the beta.select function.
+
+
+
+
+```{r}
+#install LearnBayes
+#beta.select: Selection of Beta Prior Given Knowledge of Two Quantiles
+beta.select(list(p=.5,x=.2),list(p=.9,x=.5))
+```
+
+We see that this prior information is matched with a beta(1.12, 3.56) distribution for pL. When the dose level is xH = 0.6, the user believes that the median and 90th percentile of the probability of death pH are given respectively by 0.8 and 0.98. Again using the beta.select function, this information is matched with a beta(2.10, 0.74 ) prior.
+
+```{r}
+beta.select(list(p=.5,x=.8),list(p=.9,x=.98))
+```
+
+Suppose that the beliefs about the probability pL are independent of the beliefs
+about pH. Then the joint prior of (pL, pH) is given by: 
+
+
+$g(p_L, p_H) \alpha p_L^{1.12-1}(1-p_L)^{3.56-1}p_H^{2.10-1}(1-p_H)^{0.74-1}$
+
+
+Figure 4.4 displays the conditional means prior by using error bars placed on the probability of death for two dose levels. As will be explained shortly, the smooth curve is the fitted probability curve using this prior information.
+
+Figure 4.4. Illustration of conditional means prior for the bioassay example. In each bar, the point corresponds to the median and the endpoints correspond to the quartiles of the prior distribution for each beta distribution. 
+
+
+
+
+If this prior on (pL, pH) is transformed to the regression vector ($\beta_0$, $\beta_1$) through the transformation
+
+$p_L=\frac{exp(\beta_0+\beta_1x_L)}{1+exp(\beta_0+\beta_1x_L)}$,  $p_H=\frac{exp(\beta_0+\beta_1x_H)}{1+exp(\beta_0+\beta_1x_H)}$
+
+
+one can show that the induced prior is
+
+
+$g(\beta_0, \beta_1) \alpha p_L^{1.12}(1-p_L)^{3.56}p_H^{2.10}(1-p_H)^{0.74}$
+
+
+Note that this prior has the same functional form as the likelihood, where the
+beta parameters can be viewed as the numbers of deaths and survivals in a
+prior experiment performed at two dose levels (see Table 4.2). If we combine
+these prior data with the observed data, we see that the posterior density is given by
+
+$g(\beta_0, \beta_1 | y) \alpha \prod_{i=1}^{6} p_i^{y_i}(1-p_i)^{n_i-y_i}$
+
+where $(x_j, n_j, y_j)$, $j=5,6$, represent the dose, number of deaths, and sample size in the prior experiment.
+
+
+Table 4.2.  Prior information in the bioassay experiment.
+
++------+--------+-------------+
+| Dose | Deaths | Sample Size |
++------+--------+-------------+
+|$-0.7$ | 1.12   | 4.68        |
++------+--------+-------------+
+| 0.6  | 2.10   | 2.84        |
++------+--------+-------------+
+
+
+The log posterior density for ($\beta_0$, $\beta_1$) in this logistic model is contained
+in the R function logisticpost, where the data argument is a matrix with
+columns dose, number of successes, and sample size. We first combine the
+data (contained in the matrix data) with the prior data and place them in
+the matrix data.new.
+
+
+```{r}
+prior=rbind(c(-0.7, 4.68, 1.12), c(0.6, 2.10, 0.74))
+data.new=rbind(data, prior)
+```
+
+
+
+
+
+
+To summarize the posterior distribution, we first find a rectangle that covers essentially all of the posterior probability. The maximum likelihood fit is helpful is giving a first guess at the location of this rectangle. As shown in the contour plot displayed in Figure 4.5 we see that the rectangle $−3≤\beta_0≤3,−1≤\beta_1≤9$ contains the contours that are greater than $.1\%$ of the modal value. 
+
+
+
+
+
+```{r}
+mycontour(logisticpost,c(-3,3,-1,9),data.new, xlab="beta0", ylab="beta1")
+```
+
+Fig. 4.5. Contour plot of the posterior distribution of ($\beta_0, \beta_1$) for the bioassay example. The contour lines are drawn at $10\%$, $1\%$, and $.1\%$ of the model height.
+
+
+Now that we have found the posterior distribution, we use the function semicontour to simulate pairs of ($\beta_0, \beta_1$) 
+
+
+
+from the posterior density computed on this rectangular grid. We display the contour plot with the points superimposed in Figure 4.6 to confirm that we are sampling from the posterior distribution.
+
+```{r}
+s=simcontour(logisticpost,c(-2,3,-1,11), data.new, 1000)
+#points(s)
+plot(s)
+```
+
+Fig. 4.6. Contour plot of the posterior distribution of ($\beta_0, \beta_1$) for the bioassay example. A simulated random sample from this distribution is shown on top of the contour plot.
+
+
+We illustrate several types of inferences for this problem. Figure 4.7 displays a density estimate of the simulated values (using the R function density) of the slope parameter $\beta_0$. All of the mass of the density of $\beta_1$ is on positive values, indicating that there is significant evidence that increasing the level of the dose does increase the probability of death. 
+
+
+```{r}
+plot(density(s$y),xlab="beta1")
+```
+
+Fig. 4.7. Density of simulated values from the posterior of the slope parameter $\beta_1$ in the bioassay example.
+
+
+
+In this setting, one parameter of interest is the LD-50, the value of the dose x such that the probability of death is equal to one-half. It is straightforward to show that the LD-50 is equal to  $\theta = -\beta_0/\beta_1$. One can obtain a simulated sample from the marginal posterior density of $\theta$ by computing a value of $\theta$ from each simulated pair ($\beta_0, \beta_1$). A histogram of the LD-50 is shown in Figure 4.8.
+
+
+
+```{r}
+theta=-s$x/s$y
+hist(theta,xlab="LD-50",breaks=20)
+```
+
+Fig. 4.8. Histogram of simulated values of the LD-50 parameter $−\beta_0 / \beta_1$ in the bioassay example.
+
+
+In contrast to the histogram of $\beta_1$, the LD-50 is more difficult to estimate and the posterior density of this parameter is relatively wide. We compute a 95% credible interval from the simulated draws of $\theta$.
+
+```{r}
+quantile(theta,c(.025,.975))
+```
+
+The probability that $\theta$ is contained in the interval (−.354, .506) is .95.
+
+
+
+## References
+
+Jim Albert. Bayesian Computation with R. Second Edition. 2009.
+
+Gelman et., al. Bayesian Data Analysis, New York: Chapman and Hall. 2003.
+
+
+
+
+
+

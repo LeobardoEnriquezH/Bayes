@@ -1,0 +1,63 @@
+---
+title: "KalmanFilterSmooth_DLM"
+output: pdf_document
+date: "2023-10-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dlm)
+```
+
+## Kalman Filter Smooth
+
+
+```{r}
+dlm_koi<-dlm(m0=c(200,0),C0=diag(c(3,2)),FF=matrix(c(1,0),nr=1),V=30,GG=matrix(c(1,1,0,1),nr=2),W=diag(c(5,3)))
+```
+
+
+```{r}
+pecesKoi<-c(200,235,239,245,250,245,263,289,304,312,333,349,356,345,332,329,341,358,366,369,374,379,382,391,401,428,497)     
+tsKoi<-ts(pecesKoi,start=1990,end=2016)
+plot(tsKoi)
+```
+
+
+
+```{r}
+koifilter<-dlmFilter(tsKoi,dlm_koi)
+koismooth<-dlmSmooth(koifilter)
+koi_forecast<-dlmForecast(koifilter,nAhead=5,sampleNew = 10)
+koi_state<-round(c(koismooth$s[,1],koi_forecast$a[,1]))
+```
+
+
+
+```{r}
+ts_koi.plot<-c(NA,tsKoi)
+plot(koi_state,type="o",pch=18,lty=4,lwd=1,col="chocolate1",xaxt="n",xlab="Año",ylab="Peces en el estanque")
+lines(ts_koi.plot,type="o",pch=18,lty=4,lwd=1,col="dodgerblue1")
+axis(1,at=c(1,11,21,28),labels=c(1990,2001,2011,2018))
+```
+
+
+
+
+
+## References
+
+Giovanni Petris, Sonia Petrone & Patrizia Campagnoli. "Dynamic Linear Models with R". 2009. 
+
+Giovanni Petris. "An R Package for Dynamic Linear Models". Journal of Statistical Software. 2010.
+
+
+
+
+
+
+
